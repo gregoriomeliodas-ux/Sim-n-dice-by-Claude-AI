@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simon Dice - Juego de Memoria</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-box h3 {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .info-box p {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .simon-board {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin: 0 auto 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            padding: 10px;
+            background: #2d3436;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .color-button {
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-button:disabled {
+            cursor: not-allowed;
+        }
+
+        .color-button.green {
+            background: #00b894;
+            border-radius: 100% 15px 15px 15px;
+        }
+
+        .color-button.red {
+            background: #d63031;
+            border-radius: 15px 100% 15px 15px;
+        }
+
+        .color-button.yellow {
+            background: #fdcb6e;
+            border-radius: 15px 15px 15px 100%;
+        }
+
+        .color-button.blue {
+            background: #0984e3;
+            border-radius: 15px 15px 100% 15px;
+        }
+
+        .color-button.active,
+        .color-button:active:not(:disabled) {
+            opacity: 1;
+            transform: scale(0.95);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+
+        .color-button.green.active {
+            background: #00d4a4;
+            box-shadow: 0 0 40px #00b894;
+        }
+
+        .color-button.red.active {
+            background: #ff4757;
+            box-shadow: 0 0 40px #d63031;
+        }
+
+        .color-button.yellow.active {
+            background: #ffeaa7;
+            box-shadow: 0 0 40px #fdcb6e;
+        }
+
+        .color-button.blue.active {
+            background: #74b9ff;
+            box-shadow: 0 0 40px #0984e3;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #00b894 0%, #00d4a4 100%);
+            color: white;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #d63031 0%, #ff4757 100%);
+            color: white;
+        }
+
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .difficulty {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .difficulty label {
+            font-weight: bold;
+            margin-right: 10px;
+            color: #333;
+        }
+
+        .difficulty select {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            font-size: 1em;
+            cursor: pointer;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .difficulty select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .message {
+            text-align: center;
+            font-size: 1.2em;
+            color: #333;
+            min-height: 30px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            color: #00b894;
+        }
+
+        .message.error {
+            color: #d63031;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        @media (max-width: 480px) {
+            .simon-board {
+                width: 280px;
+                height: 280px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 Simon Dice</h1>
+        
+        <div class="info-panel">
+            <div class="info-box">
+                <h3>Nivel</h3>
+                <p id="level">0</p>
+            </div>
+            <div class="info-box">
+                <h3>Puntuación</h3>
+                <p id="score">0</p>
+            </div>
+            <div class="info-box">
+                <h3>Mejor</h3>
+                <p id="highScore">0</p>
+            </div>
+        </div>
+
+        <div class="difficulty">
+            <label for="speed">Velocidad:</label>
+            <select id="speed">
+                <option value="1000">Fácil</option>
+                <option value="600" selected>Normal</option>
+                <option value="400">Difícil</option>
+                <option value="200">Experto</option>
+            </select>
+        </div>
+
+        <div class="simon-board">
+            <button class="color-button green" data-color="green" disabled></button>
+            <button class="color-button red" data-color="red" disabled></button>
+            <button class="color-button yellow" data-color="yellow" disabled></button>
+            <button class="color-button blue" data-color="blue" disabled></button>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-start" id="startBtn">Iniciar Juego</button>
+            <button class="btn btn-reset" id="resetBtn">Reiniciar</button>
+        </div>
+
+        <div class="message" id="message">Presiona "Iniciar Juego" para comenzar</div>
+    </div>
+
+    <script>
+        class SimonGame {
+            constructor() {
+                this.sequence = [];
+                this.playerSequence = [];
+                this.level = 0;
+                this.score = 0;
+                this.highScore = localStorage.getItem('simonHighScore') || 0;
+                this.isPlaying = false;
+                this.isShowingSequence = false;
+                this.colors = ['green', 'red', 'yellow', 'blue'];
+                
+                this.initElements();
+                this.initSounds();
+                this.initEventListeners();
+                this.updateDisplay();
+            }
+
+            initElements() {
+                this.colorButtons = document.querySelectorAll('.color-button');
+                this.startBtn = document.getElementById('startBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.levelDisplay = document.getElementById('level');
+                this.scoreDisplay = document.getElementById('score');
+                this.highScoreDisplay = document.getElementById('highScore');
+                this.messageDisplay = document.getElementById('message');
+                this.speedSelect = document.getElementById('speed');
+            }
+
+            initSounds() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.sounds = {
+                    green: 391.63,  // G4
+                    red: 329.63,    // E4
+                    yellow: 261.63, // C4
+                    blue: 195.81,   // G3
+                    error: 100,     // Error sound
+                    success: 800    // Success sound
+                };
+            }
+
+            initEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startGame());
+                this.resetBtn.addEventListener('click', () => this.resetGame());
+                
+                this.colorButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        if (!this.isShowingSequence && this.isPlaying) {
+                            this.handleColorClick(e.target.dataset.color);
+                        }
+                    });
+                });
+            }
+
+            startGame() {
+                this.resetGame();
+                this.isPlaying = true;
+                this.startBtn.disabled = true;
+                this.speedSelect.disabled = true;
+                this.showMessage('¡Memoriza la secuencia!', 'normal');
+                setTimeout(() => this.nextLevel(), 1000);
+            }
+
+            resetGame() {
+                this.sequence = [];
+                this.playerSequence = [];
+                this.level = 0;
+                this.score = 0;
+                this.isPlaying = false;
+                this.isShowingSequence = false;
+                this.startBtn.disabled = false;
+                this.speedSelect.disabled = false;
+                this.enableColorButtons(false);
+                this.updateDisplay();
+                this.showMessage('Presiona "Iniciar Juego" para comenzar', 'normal');
+            }
+
+            nextLevel() {
+                this.level++;
+                this.playerSequence = [];
+                this.updateDisplay();
+                
+                const nextColor = this.colors[Math.floor(Math.random() * this.colors.length)];
+                this.sequence.push(nextColor);
+                
+                this.showMessage(`Nivel ${this.level} - Observa...`, 'normal');
+                this.showSequence();
+            }
+
+            async showSequence() {
+                this.isShowingSequence = true;
+                this.enableColorButtons(false);
+                
+                const speed = parseInt(this.speedSelect.value);
+                
+                for (let i = 0; i < this.sequence.length; i++) {
+                    await this.delay(speed / 2);
+                    await this.activateColor(this.sequence[i], speed);
+                }
+                
+                this.isShowingSequence = false;
+                this.enableColorButtons(true);
+                this.showMessage('¡Tu turno! Repite la secuencia', 'normal');
+            }
+
+            async activateColor(color, duration = 600) {
+                const button = document.querySelector(`[data-color="${color}"]`);
+                button.classList.add('active', 'pulse');
+                this.playSound(color, duration);
+                
+                await this.delay(duration);
+                
+                button.classList.remove('active', 'pulse');
+                await this.delay(100);
+            }
+
+            handleColorClick(color) {
+                if (!this.isPlaying || this.isShowingSequence) return;
+                
+                this.playerSequence.push(color);
+                this.playSound(color, 200);
+                
+                const button = document.querySelector(`[data-color="${color}"]`);
+                button.classList.add('active');
+                setTimeout(() => button.classList.remove('active'), 200);
+                
+                const currentIndex = this.playerSequence.length - 1;
+                
+                if (this.playerSequence[currentIndex] !== this.sequence[currentIndex]) {
+                    this.gameOver();
+                    return;
+                }
+                
+                if (this.playerSequence.length === this.sequence.length) {
+                    this.score += this.level * 10;
+                    this.updateDisplay();
+                    this.enableColorButtons(false);
+                    
+                    if (this.level === 20) {
+                        this.victory();
+                    } else {
+                        this.showMessage('¡Correcto! Preparando siguiente nivel...', 'success');
+                        this.playSound('success', 200);
+                        setTimeout(() => this.nextLevel(), 1500);
+                    }
+                }
+            }
+
+            gameOver() {
+                this.isPlaying = false;
+                this.enableColorButtons(false);
+                this.playSound('error', 500);
+                
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem('simonHighScore', this.highScore);
+                    this.showMessage(`¡Juego terminado! ¡Nuevo récord: ${this.score} puntos!`, 'error');
+                } else {
+                    this.showMessage(`¡Juego terminado! Puntuación: ${this.score}`, 'error');
+                }
+                
+                this.updateDisplay();
+                this.startBtn.disabled = false;
+                this.speedSelect.disabled = false;
+                
+                // Efecto visual de error
+                document.querySelector('.simon-board').classList.add('pulse');
+                setTimeout(() => {
+                    document.querySelector('.simon-board').classList.remove('pulse');
+                }, 500);
+            }
+
+            victory() {
+                this.isPlaying = false;
+                this.score += 500; // Bonus por completar
+                
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem('simonHighScore', this.highScore);
+                }
+                
+                this.showMessage(`¡INCREÍBLE! ¡Has completado todos los niveles! Puntuación: ${this.score}`, 'success');
+                this.updateDisplay();
+                this.startBtn.disabled = false;
+                this.speedSelect.disabled = false;
+                
+                // Celebración visual
+                this.colorButtons.forEach((button, index) => {
+                    setTimeout(() => {
+                        button.classList.add('active', 'pulse');
+                        setTimeout(() => button.classList.remove('active', 'pulse'), 300);
+                    }, index * 100);
+                });
+            }
+
+            playSound(type, duration = 200) {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                if (type in this.sounds) {
+                    oscillator.frequency.value = this.sounds[type];
+                } else {
+                    oscillator.frequency.value = this.sounds[type] || 440;
+                }
+                
+                oscillator.type = type === 'error' ? 'sawtooth' : 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration / 1000);
+            }
+
+            enableColorButtons(enabled) {
+                this.colorButtons.forEach(button => {
+                    button.disabled = !enabled;
+                });
+            }
+
+            updateDisplay() {
+                this.levelDisplay.textContent = this.level;
+                this.scoreDisplay.textContent = this.score;
+                this.highScoreDisplay.textContent = this.highScore;
+            }
+
+            showMessage(text, type = 'normal') {
+                this.messageDisplay.textContent = text;
+                this.messageDisplay.className = `message ${type}`;
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Inicializar el juego cuando se carga la página
+        document.addEventListener('DOMContentLoaded', () => {
+            const game = new SimonGame();
+        });
+    </script>
+</body>
+</html>
